@@ -1,74 +1,14 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Search, Filter, Star } from 'lucide-react';
-const mentors = [{
-  id: 1,
-  name: 'Dr. Anna Sharma',
-  role: 'Senior Product Manager',
-  company: 'Google',
-  experience: '10+ years',
-  rating: 4.8,
-  availability: 'Available',
-  avatar: 'https://via.placeholder.com/64',
-  skills: ['Product Strategy', 'UX Design', 'Team Leadership'],
-  featured: true
-}, {
-  id: 2,
-  name: 'Benjamin Carter',
-  role: 'Software Engineer',
-  company: 'Microsoft',
-  experience: '8 years',
-  rating: 4.5,
-  availability: 'Available',
-  avatar: 'https://via.placeholder.com/64',
-  skills: ['React', 'Node.js', 'Cloud Architecture'],
-  featured: false
-}, {
-  id: 3,
-  name: 'Olivia Lee',
-  role: 'Marketing Director',
-  company: 'Salesforce',
-  experience: '12 years',
-  rating: 4.9,
-  availability: 'Busy',
-  avatar: 'https://via.placeholder.com/64',
-  skills: ['Brand Strategy', 'Digital Marketing', 'Analytics'],
-  featured: true
-}, {
-  id: 4,
-  name: 'David Kim',
-  role: 'UX Designer',
-  company: 'Apple',
-  experience: '7 years',
-  rating: 4.7,
-  availability: 'Available',
-  avatar: 'https://via.placeholder.com/64',
-  skills: ['UI Design', 'Prototyping', 'User Research'],
-  featured: false
-}, {
-  id: 5,
-  name: 'Sarah Wilson',
-  role: 'Data Scientist',
-  company: 'Amazon',
-  experience: '9 years',
-  rating: 4.6,
-  availability: 'Busy',
-  avatar: 'https://via.placeholder.com/64',
-  skills: ['Machine Learning', 'Python', 'Data Visualization'],
-  featured: true
-}, {
-  id: 6,
-  name: 'Michael Garcia',
-  role: 'Frontend Developer',
-  company: 'Netflix',
-  experience: '6 years',
-  rating: 4.4,
-  availability: 'Available',
-  avatar: 'https://via.placeholder.com/64',
-  skills: ['JavaScript', 'CSS', 'React'],
-  featured: false
-}];
+import { toast } from 'react-toastify';
+import axios from 'axios';
+
 const MentorListing = () => {
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+
   const getAvailabilityBadge = availability => {
     switch (availability) {
       case 'Available':
@@ -82,7 +22,41 @@ const MentorListing = () => {
       default:
         return null;
     }
+
   };
+
+
+  const [mentors,setMentors] = useState([]);
+
+  const fetch_mentors = async () => {
+
+
+    try{ 
+
+      const response = await axios.get(`${API_URL}/mentors/fetch`);
+      if(response.status === 200 && response.data.success){
+console.log(response.data.data);
+        setMentors(response.data.data);
+
+      }else{
+
+
+        toast.error(response.data.message || "Something went wrong");
+      }
+
+
+    }catch(error){
+console.error("Error fetching mentors:", error);
+      toast.error("Failed to fetch mentors");
+    }
+  }
+
+  useEffect(()=> {
+
+    fetch_mentors();
+  },[]);
+
+
   return <div className="ml-64">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">Mentor Listing</h1>
@@ -115,9 +89,9 @@ const MentorListing = () => {
         </div>
       </div>
       <div className="grid grid-cols-3 gap-6">
-        {mentors.map(mentor => <div key={mentor.id} className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
+        {mentors?.map(mentor => <div key={mentor.id} className="overflow-hidden bg-white border border-gray-100 rounded-lg shadow-sm">
             <div className={`p-4 ${mentor.featured ? 'bg-purple-50 border-b border-purple-100' : 'border-b border-gray-100'}`}>
-              {mentor.featured && <span className="inline-flex items-center px-2 py-1 mb-2 text-xs font-medium text-purple-800 bg-purple-100 rounded-full">
+              {mentor?.featured && <span className="inline-flex items-center px-2 py-1 mb-2 text-xs font-medium text-purple-800 bg-purple-100 rounded-full">
                   Featured
                 </span>}
               <div className="flex items-center">
@@ -146,7 +120,7 @@ const MentorListing = () => {
                   Experience: {mentor.experience}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {mentor.skills.map((skill, index) => <span key={index} className="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded-md">
+                  {mentor?.skills?.map((skill, index) => <span key={index} className="px-2 py-1 text-xs text-gray-700 bg-gray-100 rounded-md">
                       {skill}
                     </span>)}
                 </div>
