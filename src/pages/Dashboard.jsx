@@ -125,18 +125,26 @@ const Dashboard = () => {
 
   const [dataMetrics, setDataMetrics] = useState({
     totalUsers: 0,
-    totalActiveJobPosts: 0,
+    totalActiveJobPosts: 2,
     applications: 0,
     interviewsSheduled: 0,
   });
 
 
-  const fetchDataMetrics = async () => {
 
-    const response = await axios.get(`${API_URL}/dashboard/count-metrics/general/fetch`);
+
+
+  const fetchUsersInfo = async () => {
+
+    const response = await axios.get(`${API_URL}/getUserCount`);
     console.log(response.data);
     if (response.status === 200 && response.data.success) {
-      setDataMetrics(response.data.data);
+      setDataMetrics({
+        totalUsers: response.data.data.totalUsers,
+        totalActiveJobPosts: 2,
+        applications: 0,
+        interviewsSheduled: 0,
+      });
 
     } else {
 
@@ -148,7 +156,7 @@ const Dashboard = () => {
 
   useEffect(() => {
 
-    fetchDataMetrics();
+    fetchUsersInfo();
   }, []);
 
   return <div className="ml-64">

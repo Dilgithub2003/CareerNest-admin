@@ -8,7 +8,7 @@ const UserManagement = () => {
 
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const [users,setUsers] = useState([]);
+  const [users, setUsers] = useState([]);
 
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
@@ -33,17 +33,13 @@ const UserManagement = () => {
   });
   const getStatusBadge = status => {
     switch (status) {
-      case 'Active':
+      case true:
         return <span className="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">
           Active
         </span>;
-      case 'Inactive':
+      case false:
         return <span className="px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">
           Inactive
-        </span>;
-      case 'Pending':
-        return <span className="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">
-          Pending
         </span>;
       default:
         return null;
@@ -59,45 +55,96 @@ const UserManagement = () => {
 
   });
 
-  const fetch_genral_metrics = async () => {
-    try {
-
-      const response = await axios.get(`${API_URL}/users/metrics/fetch`);
-      if (response.status == 200 && response.data.success) {
 
 
-        setGeneralMetrics(response.data.data);
+  const fetchUsersInfo = async () => {
 
-      } else {
+    const response = await axios.get(`${API_URL}/getUserStatistics`);
+    console.log(response.data);
+    if (response.status === 200 && response.data.success) {
+      console.log(response.data.data.mentors.total);
+      let result = response.data.data;
+
+      let mentors = result.mentors;
+      let students = result.students;
+      let recruiters = result.recruiters;
+
+      setGeneralMetrics({
+        totalusers: mentors.total + students.total + recruiters.total,
+    activeUsers: mentors.active + students.active + recruiters.active,
+    pendingApproval: 0,
+    inactiveUsers: mentors.inactive + recruiters.inactive
+      });
+
+    } else {
 
 
-        toast.error(response.data.message || "Something went wrong");
-      }
-
-    } catch (error) {
-
-
-      toast.error("Something went wrong");
+      toast.error(response.data.message || "Something went wrong");
     }
 
-
   }
+
+
 
 
   const fetch_users = async () => {
     try {
 
-      const response = await axios.get(`${API_URL}/users/fetch`);
-      if (response.status == 200 && response.data.success) {
+      let response = await axios.get(`${API_URL}/getStudentData`);
 
-setUsers(response.data.data);
+      if (usersFilterType === 'students') {
+
+        response = await axios.get(`${API_URL}/getStudentData`);
+        if (response.status == 200 && response.data.success) {
+          console.log(response.data.data.students);
+
+          setUsers(response.data.data.students);
 
 
-      } else {
+        } else {
 
 
-        toast.error(response.data.message || "Something went wrong");
+          toast.error(response.data.message || "Something went wrong");
+        }
+
+
       }
+
+
+      if (usersFilterType === 'mentors') {
+
+        response = await axios.get(`${API_URL}/getMentorsData`);
+        if (response.status == 200 && response.data.success) {
+
+          setUsers(response.data.data.mentors);
+
+
+        } else {
+
+
+          toast.error(response.data.message || "Something went wrong");
+        }
+
+      }
+
+
+      if (usersFilterType === 'recruiters') {
+
+        response = await axios.get(`${API_URL}/getRecruitersData`);
+        if (response.status == 200 && response.data.success) {
+
+          setUsers(response.data.data.recruiters);
+
+
+        } else {
+
+
+          toast.error(response.data.message || "Something went wrong");
+        }
+
+      }
+
+
 
     } catch (error) {
 
@@ -106,18 +153,18 @@ setUsers(response.data.data);
     }
 
 
-  }
+  } 
+
+
+  const [usersFilterType, setUsersFilterType] = useState('students');
+
 
 
 
   useEffect(() => {
-
-    fetch_genral_metrics();
     fetch_users();
-
-  }, []);
-
-
+     fetchUsersInfo();
+  }, [usersFilterType]);
 
 
 
@@ -185,18 +232,18 @@ setUsers(response.data.data);
               <Filter className="w-4 h-4" />
               <span>Filter</span>
             </button>
-            <select className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
-              <option>All Roles</option>
-              <option>User</option>
-              <option>Admin</option>
-              <option>Recruiter</option>
+            <select onChange={(e) => { setUsersFilterType(e.target.value) }} className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
+
+              <option value={"students"}>Students</option>
+              <option value={"mentors"}>Mentors</option>
+              <option value={"recruiters"}>Recruiters</option>
             </select>
-            <select className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
+            {/* <select className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50">
               <option>All Status</option>
               <option>Active</option>
               <option>Inactive</option>
               <option>Pending</option>
-            </select>
+            </select> */}
           </div>
         </div>
       </div>
@@ -244,11 +291,11 @@ setUsers(response.data.data);
               <td className="px-6 py-4">
                 <div className="flex items-center">
                   <div className="flex items-center justify-center w-8 h-8 text-sm font-medium text-gray-600 bg-gray-200 rounded-full">
-                    {user.name.split(' ').map(n => n[0]).join('')}
+                    {user.name?.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-900">
-                      {user.name}
+                      {user.username}
                     </p>
                   </div>
                 </div>
@@ -257,10 +304,23 @@ setUsers(response.data.data);
                 {user.email}
               </td>
               <td className="px-6 py-4 text-sm text-gray-500">
-                {user.role}
+                {
+                  usersFilterType === "students" && "Student"
+
+                }
+
+                {
+                  usersFilterType === "mentors" && "Mentor"
+
+                }
+
+                {
+                  usersFilterType === "recruiters" && "Recruiter"
+
+                }
               </td>
               <td className="px-6 py-4 text-sm">
-                {getStatusBadge(user.status)}
+                {getStatusBadge(user.isActive)}
               </td>
               <td className="px-6 py-4 text-sm font-medium text-right">
                 <button className="text-gray-400 hover:text-gray-600">
