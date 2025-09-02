@@ -38,10 +38,11 @@ const JobPostModeration = () => {
 
     try {
 
-      const response = await axios.get(`${API_URL}/jobs/fetch`);
+      const response = await axios.get(`${API_URL}/getAllJobs`);
       if (response.status == 200 && response.data.success) {
+        console.log(response.data.data);
 
-        setJobs(response.data.data);
+        setJobs(response.data.data.students);
       } else {
 
 
@@ -57,33 +58,11 @@ const JobPostModeration = () => {
   }
 
 
-  const fetch_metrics = async () => {
 
-    try {
-
-      const response = await axios.get(`${API_URL}/jobs/metrics/fetch`);
-      if (response.status == 200 && response.data.success) {
-
-        setJobMetrics(response.data.data);
-
-      } else {
-
-
-        toast.error(response.data.message || "Something went wrong");
-      }
-
-
-    } catch (error) {
-      toast.error("Job metrics fetching failed");
-    }
-
-
-  }
 
   useEffect(() => {
 
     fetch_jobs();
-    fetch_metrics();
   }, []);
 
 
@@ -91,11 +70,11 @@ const JobPostModeration = () => {
 
     try {
 
-      const response = await axios.post(`${API_URL}/jobs/approve`, { jobId: id });
+      const response = await axios.put(`${API_URL}/approvedJob`, { jobId: id });
       if (response.status === 200 && response.data.success) {
 
         toast.success("Job approved successfully");
-
+        fetch_jobs();
 
       } else {
 
@@ -116,9 +95,11 @@ const JobPostModeration = () => {
 
     try {
 
-      const response = await axios.post(`${API_URL}/jobs/reject`, { jobId: id });
+      const response = await axios.put(`${API_URL}/rejectJob`, { jobId: id });
+      console.log(response);
       if (response.status === 200 && response.data.success) {
         toast.success("Job rejected successfully");
+        fetch_jobs();
       } else {
         toast.error(response.data.message || "Something went wrong");
       }
@@ -145,10 +126,10 @@ const JobPostModeration = () => {
     <div className="grid grid-cols-4 gap-6 mb-8">
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
         <h3 className="text-sm font-medium text-gray-500 mb-2">
-          Total Job POsts
+          Total Job Posts
         </h3>
         <p className="text-2xl font-semibold">
-          {jobMetrics.totalJobPosts}
+          {jobs.length}
         </p>
       </div>
 
@@ -158,7 +139,7 @@ const JobPostModeration = () => {
         </h3>
         <p className="text-2xl font-semibold">
           {
-            jobMetrics.pendingReview
+            jobs?.filter(job => job.isValidate === false).length
           }
         </p>
       </div>
@@ -168,7 +149,9 @@ const JobPostModeration = () => {
           Approved Posts
         </h3>
         <p className="text-2xl font-semibold">
-          {jobMetrics.approvedPosts}
+          {
+            jobs?.filter(job => job.isValidate === true).length
+          }
         </p>
       </div>
 
@@ -177,7 +160,7 @@ const JobPostModeration = () => {
           Rejected Posts
         </h3>
         <p className="text-2xl font-semibold">
-          {jobMetrics.rejectedPosts}
+          {2}
         </p>
       </div>
     </div>
@@ -220,10 +203,10 @@ const JobPostModeration = () => {
                 Company
               </th>
               <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Post Date
+                Skills
               </th>
               <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
+                Experience level
               </th>
               <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -242,29 +225,30 @@ const JobPostModeration = () => {
                   </div>
                   <div className="ml-4">
                     <div className="text-sm font-medium text-gray-900">
-                      {job.company}
+                      {job.job_title}
                     </div>
                   </div>
                 </div>
               </td>
               <td className="px-6 py-4 text-sm text-gray-500">
-                {job.position}
+                {job.company}
               </td>
               <td className="px-6 py-4 text-sm text-gray-500">
-                {job.postDate}
+                {job.skills.map(skill => skill).join(', ')}
               </td>
               <td className="px-6 py-4 text-sm">
-                {getStatusBadge(job.status)}
-              </td>
+                {
+                  job.experience_level
+                }              </td>
               <td className="px-6 py-4 text-sm font-medium">
                 <div className="flex space-x-2">
                   {/* <button className="text-indigo-600 hover:text-indigo-900">
                     View
                   </button> */}
-                  <button onClick={() => { approve_job(job.id) }} className="text-green-600 hover:text-green-900">
+                  <button onClick={() => { approve_job(job.id) }} className={`${((job.isValidate) && 'hidden')} "text-green-600 hover:text-green-900"`} disabled={job.isValidate}>
                     Approve
                   </button>
-                  <button onClick={() => { reject_job(job.id) }} className="text-red-600 hover:text-red-900">
+                  <button onClick={() => { reject_job(job.id) }} className={`${!(job.isValidate) && 'hidden'} text-red-600 hover:text-red-900`} disabled={!job.isValidate}>
                     Reject
                   </button>
                 </div>
